@@ -1,5 +1,3 @@
-const express = require("express");
-const expressGraphQL = require("express-graphql").graphqlHTTP;
 const {
   GraphQLSchema,
   GraphQLObjectType,
@@ -8,16 +6,6 @@ const {
   GraphQLInt,
   GraphQLNonNull,
 } = require("graphql");
-// const schema = require("./gqlSchemaRes");
-
-// const {
-//   GraphQLSchema,
-//   GraphQLObjectType,
-//   GraphQLString,
-//   GraphQLList,
-//   GraphQLInt,
-//   GraphQLNonNull,
-// } = require("graphql");
 
 const QuestionType = new GraphQLObjectType({
   name: "Question",
@@ -126,30 +114,9 @@ const RootMutationType = new GraphQLObjectType({
     },
   }),
 });
-
-const app = express();
-const answers = [
-  { id: 1, text: "ngrsjkd", vote: 5 },
-  { id: 2, text: "rfgasd", vote: 2 },
-  { id: 3, text: "sdfg", vote: 1 },
-  { id: 4, text: "sgzfzdzdfdfzg", vote: 2 },
-];
-const questions = [
-  { id: 1, title: "ghnjkrld", quest: "ngjklsdng", answersid: [2, 1], vote: 4 },
-  { id: 2, title: "bsdfbfad", quest: "ewkl;es;", answersid: [3, 4], vote: 5 },
-];
-
-const schema = new GraphQLSchema({
-  query: rootQueryType,
-  mutation: RootMutationType,
-});
-
-app.use(
-  "/",
-  expressGraphQL({
-    schema: schema,
-    graphiql: true,
-  })
-);
-
-app.listen(3000, () => console.log("running..."));
+module.exports = {
+  schema: new GraphQLSchema({
+    query: rootQueryType,
+    mutation: RootMutationType,
+  }),
+};
