@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 const QuestionForm = ({ onSubmit }) => {
   const [title, setTitle] = useState("");
-  const [text, setText] = useState("");
+  const [quest, setText] = useState("");
 
   const handleTitleChange = (e) => {
     setTitle(e.target.value);
@@ -14,9 +14,7 @@ const QuestionForm = ({ onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Call the onSubmit prop with the form data
-    onSubmit({ title, text });
-    // Clear the form fields
+    onSubmit({ title, quest });
     setTitle("");
     setText("");
   };
@@ -35,7 +33,7 @@ const QuestionForm = ({ onSubmit }) => {
       <br />
       <label>
         Text:
-        <textarea value={text} onChange={handleTextChange} required />
+        <textarea value={quest} onChange={handleTextChange} required />
       </label>
       <br />
       <button type="submit">Post Question</button>

@@ -1,5 +1,7 @@
 const express = require("express");
 const expressGraphQL = require("express-graphql").graphqlHTTP;
+const cors = require("cors");
+
 const {
   GraphQLSchema,
   GraphQLObjectType,
@@ -128,6 +130,7 @@ const RootMutationType = new GraphQLObjectType({
 });
 
 const app = express();
+app.use(cors());
 const answers = [
   { id: 1, text: "ngrsjkd", vote: 5 },
   { id: 2, text: "rfgasd", vote: 2 },

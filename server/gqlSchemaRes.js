@@ -33,6 +33,7 @@ const VoteType = new GraphQLObjectType({
   description: "Vote on a question or answer",
   fields: () => ({
     votevalue: { type: GraphQLNonNull(GraphQLInt) },
+    id: { type: GraphQLNonNull(GraphQLInt) },
     type: { type: GraphQLNonNull(GraphQLString) }, // "question" or "answer"
   }),
 });
