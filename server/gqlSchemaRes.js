@@ -4,6 +4,7 @@ const {
   GraphQLString,
   GraphQLList,
   GraphQLInt,
+  GraphQLInputObjectType,
   GraphQLNonNull,
 } = require("graphql");
 
@@ -28,13 +29,23 @@ const QuestionType = new GraphQLObjectType({
   }),
 });
 
+const VoteInputType = new GraphQLInputObjectType({
+  name: "VoteInput",
+  description: "Input for voting on a question or answer",
+  fields: () => ({
+    id: { type: GraphQLNonNull(GraphQLInt) },
+    type: { type: GraphQLNonNull(GraphQLString) }, // "question" or "answer"
+    votevalue: { type: GraphQLNonNull(GraphQLInt) },
+  }),
+});
+
 const VoteType = new GraphQLObjectType({
   name: "Vote",
   description: "Vote on a question or answer",
   fields: () => ({
-    votevalue: { type: GraphQLNonNull(GraphQLInt) },
     id: { type: GraphQLNonNull(GraphQLInt) },
     type: { type: GraphQLNonNull(GraphQLString) }, // "question" or "answer"
+    votevalue: { type: GraphQLNonNull(GraphQLInt) },
   }),
 });
 
@@ -101,15 +112,14 @@ const RootMutationType = new GraphQLObjectType({
       type: VoteType,
       description: "Vote on a question or answer",
       args: {
-        input: { type: GraphQLNonNull(GraphQLString) },
-        voteValue: { type: GraphQLNonNull(GraphQLInt) },
+        input: { type: GraphQLNonNull(VoteInputType) },
       },
       resolve: (_, { input }) => {
-        const { id, type, voteValue } = input;
+        const { id, type, votevalue } = input;
         const targetArray = type === "question" ? questions : answers;
         const target = targetArray.find((item) => item.id === id);
         if (target) {
-          target.vote += voteValue;
+          target.vote += votevalue;
         }
       },
     },

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import React from "react";
 import "./App.css";
 import ForumPost from "./components/ForumPost";
-import { TEST } from "./gqls";
+import answerPage from "./answerPage";
+import { TEST, newQuest } from "./gqls";
 import {
   ApolloClient,
   InMemoryCache,
@@ -23,13 +24,36 @@ const client = new ApolloClient({
 function App() {
   const { loading, error, data } = useQuery(TEST);
 
+  const [addQuestion] = useMutation(newQuest);
+
+  // useEffect(() => {
+  // if (!loading && data) {
+  // const questions = data.questions;
+  // }
+  // }, [loading, data]);
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
   console.log("GraphQL Data:", data);
-
   const questions = data.questions;
+
+  // if (!loading && data) {
+  // const questions = data.questions;
+  // }
+
   const handleQuestionSubmit = (formData) => {
+    const input = {
+      title: formData.title,
+      quest: formData.quest,
+    };
     console.log("Form Data:", formData);
+    addQuestion({ variables: { input } })
+      .then((result) => {
+        console.log("question added successfully:", result.data);
+      })
+      .catch((err) => {
+        console.error("Error adding question:", err.message);
+      });
   };
 
   return (
@@ -38,9 +62,10 @@ function App() {
       <div>
         <QuestionForm onSubmit={handleQuestionSubmit} />
       </div>
-      {questions.map((question) => (
-        <ForumPost key={question.id} forumPost={question} />
-      ))}
+      {questions &&
+        questions.map((question) => (
+          <ForumPost key={question.id} forumPost={question} />
+        ))}
     </>
   );
 }

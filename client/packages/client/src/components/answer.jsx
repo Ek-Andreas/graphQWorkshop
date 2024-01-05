@@ -3,16 +3,23 @@ import { useMutation } from "@apollo/client";
 import { VOTE_ON } from "../gqls";
 
 const Answer = ({ answer }) => {
-  const [addVote] = useMutation(VOTE_ON);
+  const [addVote, { error }] = useMutation(VOTE_ON);
 
-  const handleVote = (voteValue) => {
+  const handleVote = (votevalue) => {
     const input = {
       id: answer.id,
       type: "answer",
-      voteValue: voteValue,
+      votevalue: votevalue,
     };
-
-    addVote({ variables: { input } });
+    console.log(input);
+    addVote({ variables: { input } })
+      .then((result) => {
+        console.log("Vote added successfully:", result.data);
+        answer.vote + votevalue;
+      })
+      .catch((err) => {
+        console.error("Error adding vote:", err.message);
+      });
   };
   return (
     <li>

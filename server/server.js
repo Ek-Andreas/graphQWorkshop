@@ -9,17 +9,19 @@ const {
   GraphQLList,
   GraphQLInt,
   GraphQLNonNull,
+  GraphQLInputObjectType,
 } = require("graphql");
-// const schema = require("./gqlSchemaRes");
 
-// const {
-//   GraphQLSchema,
-//   GraphQLObjectType,
-//   GraphQLString,
-//   GraphQLList,
-//   GraphQLInt,
-//   GraphQLNonNull,
-// } = require("graphql");
+const answers = [
+  { id: 1, text: "ngrsjkd", vote: 5 },
+  { id: 2, text: "rfgasd", vote: 2 },
+  { id: 3, text: "sdfg", vote: 1 },
+  { id: 4, text: "sgzfzdzdfdfzg", vote: 2 },
+];
+const questions = [
+  { id: 1, title: "ghnjkrld", quest: "ngjklsdng", answersid: [2, 1], vote: 4 },
+  { id: 2, title: "bsdfbfad", quest: "ewkl;es;", answersid: [3, 4], vote: 5 },
+];
 
 const QuestionType = new GraphQLObjectType({
   name: "Question",
@@ -34,14 +36,31 @@ const QuestionType = new GraphQLObjectType({
     answers: {
       type: new GraphQLList(AnswerType),
       resolve: (question) => {
-        return answers.filter((answer) =>
-          question.answersid.includes(answer.id)
-        );
+        const answersIds = question.answersid || [];
+        return answers.filter((answer) => answersIds.includes(answer.id));
       },
     },
   }),
 });
 
+const QuestionInputType = new GraphQLInputObjectType({
+  name: "QuestionInput",
+  description: "Input for Question",
+  fields: () => ({
+    title: { type: GraphQLNonNull(GraphQLString) },
+    quest: { type: GraphQLNonNull(GraphQLString) },
+  }),
+});
+
+const VoteInputType = new GraphQLInputObjectType({
+  name: "VoteInput",
+  description: "Input for voting on a question or answer",
+  fields: () => ({
+    id: { type: GraphQLNonNull(GraphQLInt) },
+    type: { type: GraphQLNonNull(GraphQLString) }, // "question" or "answer"
+    votevalue: { type: GraphQLNonNull(GraphQLInt) },
+  }),
+});
 const VoteType = new GraphQLObjectType({
   name: "Vote",
   description: "Vote on a question or answer",
@@ -81,17 +100,18 @@ const RootMutationType = new GraphQLObjectType({
       type: QuestionType,
       description: "Add Question",
       args: {
-        title: { type: GraphQLNonNull(GraphQLString) },
-        quest: { type: GraphQLNonNull(GraphQLString) },
+        input: { type: GraphQLNonNull(QuestionInputType) },
       },
-      resolve: (parent, args) => {
-        const quest = {
-          id: ++questions.length,
-          title: args.title,
-          quest: args.quest,
+      resolve: (_, { input }) => {
+        const { title, quest } = input;
+        const question = {
+          id: questions.length + 1,
+          title: title,
+          quest: quest,
+          vote: 0,
         };
-        questions.push(quest);
-        return quest;
+        questions.push(question);
+        return question;
       },
     },
 
@@ -104,7 +124,7 @@ const RootMutationType = new GraphQLObjectType({
       resolve: (parent, args) => {
         const answer = {
           id: ++answers.length,
-          text: args.title,
+          text: args.text,
         };
         answers.push(answer);
         return answer;
@@ -114,16 +134,16 @@ const RootMutationType = new GraphQLObjectType({
       type: VoteType,
       description: "Vote on a question or answer",
       args: {
-        input: { type: GraphQLNonNull(GraphQLString) },
-        voteValue: { type: GraphQLNonNull(GraphQLInt) },
+        input: { type: GraphQLNonNull(VoteInputType) },
       },
       resolve: (_, { input }) => {
-        const { id, type, voteValue } = input;
+        const { id, type, votevalue } = input;
         const targetArray = type === "question" ? questions : answers;
         const target = targetArray.find((item) => item.id === id);
         if (target) {
-          target.vote += voteValue;
+          target.vote = (target.vote || 0) + votevalue;
         }
+        return { type, votevalue };
       },
     },
   }),
@@ -131,16 +151,6 @@ const RootMutationType = new GraphQLObjectType({
 
 const app = express();
 app.use(cors());
-const answers = [
-  { id: 1, text: "ngrsjkd", vote: 5 },
-  { id: 2, text: "rfgasd", vote: 2 },
-  { id: 3, text: "sdfg", vote: 1 },
-  { id: 4, text: "sgzfzdzdfdfzg", vote: 2 },
-];
-const questions = [
-  { id: 1, title: "ghnjkrld", quest: "ngjklsdng", answersid: [2, 1], vote: 4 },
-  { id: 2, title: "bsdfbfad", quest: "ewkl;es;", answersid: [3, 4], vote: 5 },
-];
 
 const schema = new GraphQLSchema({
   query: rootQueryType,
