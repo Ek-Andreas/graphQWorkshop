@@ -1,7 +1,7 @@
 const express = require("express");
 const expressGraphQL = require("express-graphql").graphqlHTTP;
 const cors = require("cors");
-
+const mongodb = require("mongodb");
 const {
   GraphQLSchema,
   GraphQLObjectType,
@@ -11,17 +11,18 @@ const {
   GraphQLNonNull,
   GraphQLInputObjectType,
 } = require("graphql");
+const { MongoClient } = require("mongodb");
 
-const answers = [
-  { id: 1, text: "ngrsjkd", vote: 5 },
-  { id: 2, text: "rfgasd", vote: 2 },
-  { id: 3, text: "sdfg", vote: 1 },
-  { id: 4, text: "sgzfzdzdfdfzg", vote: 2 },
-];
-const questions = [
-  { id: 1, title: "ghnjkrld", quest: "ngjklsdng", answersid: [2, 1], vote: 4 },
-  { id: 2, title: "bsdfbfad", quest: "ewkl;es;", answersid: [3, 4], vote: 5 },
-];
+// const answers = [
+//   { id: 1, text: "ngrsjkd", vote: 5 },
+//   { id: 2, text: "rfgasd", vote: 2 },
+//   { id: 3, text: "sdfg", vote: 1 },
+//   { id: 4, text: "sgzfzdzdfdfzg", vote: 2 },
+// ];
+// const questions = [
+//   { id: 1, title: "ghnjkrld", quest: "ngjklsdng", answersid: [2, 1], vote: 4 },
+//   { id: 2, title: "bsdfbfad", quest: "ewkl;es;", answersid: [3, 4], vote: 5 },
+// ];
 
 const QuestionType = new GraphQLObjectType({
   name: "Question",
@@ -111,6 +112,7 @@ const RootMutationType = new GraphQLObjectType({
           vote: 0,
         };
         questions.push(question);
+        insertQuestion(question);
         return question;
       },
     },
@@ -127,6 +129,7 @@ const RootMutationType = new GraphQLObjectType({
           text: args.text,
         };
         answers.push(answer);
+        insertanswer(answer);
         return answer;
       },
     },
@@ -142,27 +145,113 @@ const RootMutationType = new GraphQLObjectType({
         const target = targetArray.find((item) => item.id === id);
         if (target) {
           target.vote = (target.vote || 0) + votevalue;
+          updateVotes(target, VoteType, votevalue);
         }
         return { type, votevalue };
       },
     },
   }),
 });
-
-const app = express();
-app.use(cors());
-
 const schema = new GraphQLSchema({
   query: rootQueryType,
   mutation: RootMutationType,
 });
 
+const app = express();
+app.use(cors());
+
+//const database = client.db("test_db");
+//const answers = database.collection('answers');
+// Query for a movie that has the title 'Back to the Future'
+//const query = { title: 'Back to the Future' };
+//const movie = await movies.findOne(query);
+const uri = "mongodb://localhost:27017";
+const client = new MongoClient(uri);
+async function run() {
+  try {
+    const database = client.db("mydb");
+    coll = database.collection("answers");
+
+    answers = await coll.find().toArray();
+
+    coll = database.collection("questions");
+    questions = await coll.find({}).toArray();
+    // console.log(answers);
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await client.close();
+  }
+}
+
+async function insertQuestion(quest) {
+  try {
+    const database = client.db("mydb");
+    coll = database.collection("questions");
+    coll.insert(quest);
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await client.close();
+  }
+}
+
+async function updateVotes(targettype, VoteType, votevalue) {
+  try {
+    const database = client.db("mydb");
+    coll = database.collection(VoteType);
+    coll.updateOne(
+      { id: targettype.id },
+      { $set: { vote: targettype.vote + votevalue } }
+    );
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await client.close();
+  }
+}
+
+async function insertanswer(answer) {
+  try {
+    const database = client.db("mydb");
+    coll = database.collection("answers");
+    coll.insert(answer);
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await client.close();
+  }
+}
+
+run().catch(console.dir);
+// console.log(await database.listCollections());
+
+// coll = database.collection("questions");
+// questions = coll.find({}).toArray();
+
 app.use(
   "/",
+
   expressGraphQL({
     schema: schema,
     graphiql: true,
   })
 );
 
+// async function run() {
+//   try {
+//     await client.connect();
+//     //console.log(await client.db().admin().listDatabases());
+//     const database = client.db("mydb");
+//     // console.log(await database.listCollections());
+//     const coll = database.collection("answers");
+//     await coll.insertMany(answers);
+//     // Query for a movie that has the title 'Back to the Future'
+//     // const query = { title: "Back to the Future" };
+//     // const movie = await movies.findOne(query);
+//     // console.log(movie);
+//   } finally {
+//     // Ensures that the client will close when you finish/error
+//     await client.close();
+//   }
+// }
+// run().catch(console.dir);
+
+// adder();
 app.listen(3000, () => console.log("running..."));
